@@ -10,7 +10,7 @@
 		{{ range $index, $value := $list }}
 			{{- $tags := default (slice) .Params.tags -}}
 			{{- $categories := default (slice) .Params.categories -}}
-			{{- $cleanContent := .Content | replaceRE "(?is)<script[^>]*?>.*?</script>" "" | replaceRE "(?is)<style[^>]*?>.*?</style>" "" | plainify -}}
+			{{- $cleanContent := .Content | replaceRE "(?is)<script[^>]*?>.*?</script>" "" | replaceRE "(?is)<style[^>]*?>.*?</style>" "" | replaceRE "(?is)<noscript[^>]*?>.*?</noscript>" "" | plainify -}}
 			{
 				"id": "{{ .Permalink }}",
 				"title": {{ .Title | jsonify }},

@@ -35,7 +35,6 @@ weight: 100
     <div class="results-meta">
       <p id="resultsCount" class="results-count"></p>
     </div>
-    <p id="resultsEmpty" class="results-empty is-hidden"></p>
     <ul id="resultsList" class="results-list"></ul>
   </div>
 </div>
@@ -50,7 +49,6 @@ weight: 100
 	var resultsContainer = document.getElementById('resultsContainer');
 	var resultsCount = document.getElementById('resultsCount');
 	var resultsList = document.getElementById('resultsList');
-	var resultsEmpty = document.getElementById('resultsEmpty');
 	var searchLoading = document.getElementById('searchLoading');
 	var searchError = document.getElementById('searchError');
 
@@ -143,18 +141,14 @@ weight: 100
 	function hideResults() {
 		resultsContainer.classList.add('is-hidden');
 		resultsList.innerHTML = '';
-		resultsEmpty.classList.add('is-hidden');
 		resultsCount.textContent = '';
 	}
 
 	function renderResults(matches, keywords, query) {
 		resultsList.innerHTML = '';
 		if (matches.length === 0) {
-			resultsEmpty.textContent = 'Kein Ergebnis für „' + query + '“.';
-			resultsEmpty.classList.remove('is-hidden');
 			return;
 		}
-		resultsEmpty.classList.add('is-hidden');
 
 		matches.forEach(function(item) {
 			var li = document.createElement('li');
@@ -183,11 +177,21 @@ weight: 100
 
 			headerLine.appendChild(dateSpan);
 
+			var metaLine = null;
+			if (item.metaString) {
+				metaLine = document.createElement('p');
+				metaLine.className = 'result-meta';
+				metaLine.innerHTML = 'Stichworte: ' + highlight(item.metaString, keywords);
+			}
+
 			var snippet = document.createElement('p');
 			snippet.className = 'result-snippet';
 			snippet.innerHTML = buildSnippet(item.content, keywords);
 
 			article.appendChild(headerLine);
+			if (metaLine) {
+				article.appendChild(metaLine);
+			}
 			article.appendChild(snippet);
 			li.appendChild(article);
 			resultsList.appendChild(li);
@@ -297,13 +301,36 @@ weight: 100
 			archiveItems = items.map(function(item) {
 				var title = normalizeText(item.title || '');
 				var content = normalizeText(item.content_text || '');
+				var tagsRaw = Array.isArray(item.tags) ? item.tags : [];
+				var categoriesRaw = Array.isArray(item.categories) ? item.categories : [];
+				var metaSet = Object.create(null);
+				var metaValues = [];
+
+				function appendMeta(values) {
+					values.forEach(function(value) {
+						var clean = normalizeText(value);
+						if (!clean || metaSet[clean]) {
+							return;
+						}
+						metaSet[clean] = true;
+						metaValues.push(clean);
+					});
+				}
+
+				appendMeta(tagsRaw);
+				appendMeta(categoriesRaw);
+
+				var metaString = metaValues.join(', ');
+
 				return {
 					id: item.id || item.url,
 					url: item.url,
 					date_published: item.date_published,
 					displayTitle: title || 'Beitrag ohne Titel',
 					content: content,
-					searchText: (title + ' ' + content).toLowerCase()
+					metaValues: metaValues,
+					metaString: metaString,
+					searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
 				};
 			});
 			finishLoading();
@@ -395,11 +422,6 @@ weight: 100
 	margin: 0;
 }
 
-.results-empty {
-	margin: 0;
-	font-style: italic;
-}
-
 .results-list {
 	list-style: none;
 	margin: 0;
@@ -433,13 +455,20 @@ weight: 100
 	color: inherit;
 }
 
+.result-meta {
+	margin: 0 0 0.35rem;
+	color: inherit;
+	opacity: 0.8;
+}
+
 .result-snippet {
 	margin: 0;
 	line-height: 1.5;
 	color: inherit;
 }
 
-.result-snippet mark {
+.result-snippet mark,
+.result-meta mark {
 	background: #ffd955;
 	color: inherit;
 	padding: 0 0.15rem;
