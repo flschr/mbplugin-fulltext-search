@@ -7,7 +7,7 @@ weight: 100
 
 <div class="search-page">
   <div class="search-intro">
-    <p>Finde Beiträge im Blog. Ergebnisse erscheinen bereits beim Tippen.</p>
+  <p>Durchsuche über {{ sub now.Year 2002 }} Jahre {{ len (where .Site.RegularPages "Type" "post") }} fabelhafte Artikel.</p>
   </div>
 
   <form id="searchForm" class="search-form" role="search">
@@ -163,24 +163,30 @@ weight: 100
 			var article = document.createElement('article');
 			article.className = 'result-card';
 
-			var meta = document.createElement('div');
-			meta.className = 'result-meta';
-
 			var dateSpan = document.createElement('span');
+			dateSpan.className = 'result-date';
 			dateSpan.textContent = formatDate(item.date_published);
-			meta.appendChild(dateSpan);
 
 			var titleLink = document.createElement('a');
 			titleLink.className = 'result-title';
 			titleLink.href = item.url;
 			titleLink.textContent = item.displayTitle;
 
+			var headerLine = document.createElement('div');
+			headerLine.className = 'result-header';
+			headerLine.appendChild(dateSpan);
+
+			if (item.displayTitle) {
+				var separator = document.createTextNode(' · ');
+				headerLine.appendChild(separator);
+				headerLine.appendChild(titleLink);
+			}
+
 			var snippet = document.createElement('p');
 			snippet.className = 'result-snippet';
 			snippet.innerHTML = buildSnippet(item.content, keywords);
 
-			article.appendChild(meta);
-			article.appendChild(titleLink);
+			article.appendChild(headerLine);
 			article.appendChild(snippet);
 			li.appendChild(article);
 			resultsList.appendChild(li);
@@ -409,17 +415,17 @@ weight: 100
 	box-shadow: none;
 }
 
-.result-meta {
+.result-header {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	align-items: center;
+	align-items: baseline;
+	gap: 0.35rem;
 	margin-bottom: 0.35rem;
 }
 
-.result-title {
-	display: block;
-	margin-bottom: 0.35rem;
+.result-header .result-date {
+	margin: 0;
+	font-weight: inherit;
+	color: inherit;
 }
 
 .result-snippet {
