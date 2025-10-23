@@ -387,10 +387,20 @@ menu:
 .clear-search {
 	position: absolute;
 	right: 0.85rem;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
 	background: transparent;
 	border: none;
+	border-radius: 50%;
 	cursor: pointer;
 	padding: 0;
+	font-size: 1.1rem;
+	line-height: 1;
 }
 
 .search-loading {
