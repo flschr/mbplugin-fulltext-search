@@ -6,38 +6,38 @@ weight: 100
 ---
 
 <div class="search-page">
-	<div class="search-intro">
-		<p>Finde Beiträge im Blog. Ergebnisse erscheinen bereits beim Tippen.</p>
-	</div>
+  <div class="search-intro">
+    <p>Finde Beiträge im Blog. Ergebnisse erscheinen bereits beim Tippen.</p>
+  </div>
 
-	<form id="searchForm" class="search-form" role="search">
-		<div class="search-box">
-			<input
-				type="search"
-				name="q"
-				id="searchInput"
-				class="search-input"
-				placeholder="Suchbegriff eingeben…"
-				autocomplete="off"
-				disabled
-				aria-label="Blog durchsuchen">
-			<button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">×</button>
-		</div>
-	</form>
+  <form id="searchForm" class="search-form" role="search">
+    <div class="search-box">
+      <input
+        type="search"
+        name="q"
+        id="searchInput"
+        class="search-input"
+        placeholder="Suchbegriff eingeben…"
+        autocomplete="off"
+        disabled
+        aria-label="Blog durchsuchen">
+      <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">×</button>
+    </div>
+  </form>
 
-	<div id="searchLoading" class="search-loading is-hidden">
-		<span>Lade Archiv…</span>
-	</div>
+  <div id="searchLoading" class="search-loading is-hidden">
+    <span>Lade Archiv…</span>
+  </div>
 
-	<div id="searchError" class="search-error is-hidden" role="alert"></div>
+  <div id="searchError" class="search-error is-hidden" role="alert"></div>
 
-	<div id="resultsContainer" class="results-container is-hidden">
-		<div class="results-meta">
-			<p id="resultsCount" class="results-count"></p>
-		</div>
-		<p id="resultsEmpty" class="results-empty is-hidden"></p>
-		<ul id="resultsList" class="results-list"></ul>
-	</div>
+  <div id="resultsContainer" class="results-container is-hidden">
+    <div class="results-meta">
+      <p id="resultsCount" class="results-count"></p>
+    </div>
+    <p id="resultsEmpty" class="results-empty is-hidden"></p>
+    <ul id="resultsList" class="results-list"></ul>
+  </div>
 </div>
 
 <script>
