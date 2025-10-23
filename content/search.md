@@ -310,9 +310,9 @@ weight: 100
 
 <style>
 .search-page {
-	max-width: 760px;
-	margin: 0 auto;
-	padding: 1rem;
+	margin: 0;
+	padding: 0;
+	max-width: none;
 }
 
 .search-intro p {
@@ -445,7 +445,7 @@ weight: 100
 	}
 
 	.result-card {
-		padding: 1rem;
+		padding: 0;
 	}
 }
 </style>
