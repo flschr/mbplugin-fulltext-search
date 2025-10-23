@@ -7,7 +7,7 @@ weight: 100
 
 <div class="search-page">
   <div class="search-intro">
-  <p>Durchsuche über {{ sub now.Year 2002 }} Jahre {{ len (where .Site.RegularPages "Type" "post") }} fabelhafte Artikel.</p>
+  {{< search_intro >}}
   </div>
 
   <form id="searchForm" class="search-form" role="search">
@@ -174,13 +174,14 @@ weight: 100
 
 			var headerLine = document.createElement('div');
 			headerLine.className = 'result-header';
-			headerLine.appendChild(dateSpan);
 
 			if (item.displayTitle) {
+				headerLine.appendChild(titleLink);
 				var separator = document.createTextNode(' · ');
 				headerLine.appendChild(separator);
-				headerLine.appendChild(titleLink);
 			}
+
+			headerLine.appendChild(dateSpan);
 
 			var snippet = document.createElement('p');
 			snippet.className = 'result-snippet';
@@ -217,7 +218,11 @@ weight: 100
 		});
 
 		resultsContainer.classList.remove('is-hidden');
-		resultsCount.textContent = matches.length + ' ' + (matches.length === 1 ? 'Treffer' : 'Treffer') + ' für „' + trimmed + '“';
+		if (matches.length === 0) {
+			resultsCount.textContent = 'Keine Treffer für „' + trimmed + '“';
+		} else {
+			resultsCount.textContent = matches.length + ' ' + (matches.length === 1 ? 'Treffer' : 'Treffer') + ' für „' + trimmed + '“';
+		}
 		renderResults(matches, keywords, trimmed);
 	}
 

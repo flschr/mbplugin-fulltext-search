@@ -1,0 +1,17 @@
+{{- $posts := where .Site.RegularPages "Type" "post" -}}
+{{- $count := len $posts -}}
+{{- if gt $count 0 -}}
+  {{- $sorted := sort $posts "Date" "asc" -}}
+  {{- $first := index $sorted 0 -}}
+  {{- $startYear := $first.Date.Year -}}
+  {{- $years := sub (now.Year) $startYear -}}
+  {{- $yearsText := "" -}}
+  {{- if gt $years 0 -}}
+    {{- $yearsText = printf "über %d Jahre" $years -}}
+  {{- else -}}
+    {{- $yearsText = printf "seit %d" $startYear -}}
+  {{- end -}}
+  <p>Durchsuche {{ $yearsText }} voller {{ $count }} fabelhafter Artikel.</p>
+{{- else -}}
+  <p>Durchsuche diesen Blog – aktuell sind noch keine Artikel vorhanden.</p>
+{{- end -}}
