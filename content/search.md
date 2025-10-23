@@ -1,8 +1,10 @@
 ---
-title: "Search"
+title: "Suche"
 url: "/search/"
-menu: "main"
-weight: 100
+menu:
+  main:
+    name: "Suche"
+    weight: 100
 ---
 
 <div class="search-page">
