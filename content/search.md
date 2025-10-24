@@ -166,7 +166,7 @@ menu:
 			var titleLink = document.createElement('a');
 			titleLink.className = 'result-title';
 			titleLink.href = item.url;
-			titleLink.textContent = item.displayTitle;
+			titleLink.innerHTML = highlight(item.displayTitle, keywords);
 
 			var headerLine = document.createElement('div');
 			headerLine.className = 'result-header';
