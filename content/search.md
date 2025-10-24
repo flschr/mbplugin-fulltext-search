@@ -388,7 +388,7 @@ menu:
 	position: absolute;
 	right: 0.85rem;
 	top: 50%;
-	transform: translateY(-50%);
+	transform: translateY(-65%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
