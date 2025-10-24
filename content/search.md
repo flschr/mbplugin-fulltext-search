@@ -398,14 +398,9 @@ menu:
 	padding: 0;
 	color: var(--accent2, #666);
 	transition: color 0.2s ease, background 0.2s ease;
-}
-
-.clear-search span {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
-	height: 100%;
 	font-size: 1.2rem;
 	line-height: 1;
 }
