@@ -1,6 +1,6 @@
 # Search page
 
-Fork of Manton Reece's original Micro.blog search plugin — thanks to Manton for sharing the foundation.
+Fork of Manton Reece's <a href="microdotblog/plugin-search-page">original Micro.blog search plugin</a> — thanks to Manton for sharing the foundation.
 
 This version differs from the upstream release by:
 - Localising the entire search page for German, including a shortcode intro that surfaces the total years and posts on the site.
