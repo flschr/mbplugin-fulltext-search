@@ -1,4 +1,4 @@
-# Search page
+# Advanced Micro.blog search page
 
 Fork of Manton Reece's <a href="microdotblog/plugin-search-page">original Micro.blog search plugin</a> — thanks to Manton for sharing the foundation.
 
