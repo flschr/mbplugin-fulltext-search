@@ -391,7 +391,7 @@ menu:
 .clear-search {
 	position: absolute;
 	right: 0.85rem;
-	top: 50%;
+	top: 45%;
 	transform: translateY(-50%);
 	width: 2rem;
 	height: 2rem;
