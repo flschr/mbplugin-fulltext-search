@@ -23,7 +23,7 @@ menu:
         autocomplete="off"
         disabled
         aria-label="Blog durchsuchen">
-      <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">×</button>
+      <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen"><span aria-hidden="true">×</span></button>
     </div>
   </form>
 
@@ -387,18 +387,33 @@ menu:
 .clear-search {
 	position: absolute;
 	right: 0.85rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 1.75rem;
-	height: 1.75rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 2rem;
+	height: 2rem;
 	background: transparent;
 	border: none;
 	border-radius: 50%;
 	cursor: pointer;
 	padding: 0;
-	font-size: 1.1rem;
+	color: var(--accent2, #666);
+	transition: color 0.2s ease, background 0.2s ease;
+}
+
+.clear-search span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-size: 1.2rem;
 	line-height: 1;
+}
+
+.clear-search:hover,
+.clear-search:focus {
+	color: var(--link, #3b82f6);
+	background: rgba(59, 130, 246, 0.12);
 }
 
 .search-loading {
