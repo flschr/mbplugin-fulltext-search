@@ -1,0 +1,4 @@
+{{- $years := .years -}}
+{{- $count := .count -}}
+{{- $text := default "%d Jahre, %d Artikel – finde deinen Favoriten" .text -}}
+{{- printf $text $years $count -}}
