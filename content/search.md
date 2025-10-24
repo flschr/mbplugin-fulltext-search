@@ -387,7 +387,6 @@ menu:
 .clear-search {
 	position: absolute;
 	right: 0.85rem;
-	top: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
