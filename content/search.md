@@ -451,12 +451,35 @@ menu:
 }
 
 .results-list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+}
+
+/*
+ * The Micro.blog theme exposes the scroll-to-top progress button globally. On
+ * touch devices, tapping it could leave the progress ring stuck with a white
+ * stroke because the touch feedback styles override the base colour. Force the
+ * button and all nested SVG elements to inherit the surrounding text colour so
+ * the ring stays visible in both light and dark themes.
+ */
+.scroll-to-top,
+.scroll-to-top:focus,
+.scroll-to-top:active,
+[data-component="scroll-progress"],
+[data-component="scroll-progress"]:focus,
+[data-component="scroll-progress"]:active {
+        color: inherit !important;
+}
+
+.scroll-to-top svg,
+.scroll-to-top circle,
+[data-component="scroll-progress"] svg,
+[data-component="scroll-progress"] circle {
+        stroke: currentColor !important;
 }
 
 .results-item {
