@@ -5,7 +5,7 @@
 	"home_page_url": "{{ .Site.BaseURL }}",
 	"feed_url": "{{ .Site.BaseURL }}photos/index.json",
 	"items": [
-		{{- $list := (where .Site.Pages "Type" "post") -}}
+		{{- $list := (where .Site.RegularPages "Type" "post") -}}
 		{{- $len := (len $list) -}}
 		{{ range $index, $value := $list }}
 			{{- $tags := default (slice) .Params.tags -}}
