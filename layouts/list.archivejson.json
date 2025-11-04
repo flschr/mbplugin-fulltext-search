@@ -5,12 +5,17 @@
 	"home_page_url": "{{ .Site.BaseURL }}",
 	"feed_url": "{{ .Site.BaseURL }}photos/index.json",
 	"items": [
-		{{- $list := (where .Site.Pages "Type" "post") -}}
+		{{- $posts := (where .Site.RegularPages "Type" "post") -}}
+		{{- $aboutPage := where .Site.RegularPages ".File.BaseNameNoExt" "about" -}}
+		{{- $datenschutzPage := where .Site.RegularPages ".File.BaseNameNoExt" "datenschutz" -}}
+		{{- $list := union $posts (union $aboutPage $datenschutzPage) -}}
 		{{- $len := (len $list) -}}
 		{{ range $index, $value := $list }}
 			{{- $tags := default (slice) .Params.tags -}}
 			{{- $categories := default (slice) .Params.categories -}}
-			{{- $cleanContent := .Content | replaceRE "(?is)<script[^>]*?>.*?</script>" "" | replaceRE "(?is)<style[^>]*?>.*?</style>" "" | replaceRE "(?is)<noscript[^>]*?>.*?</noscript>" "" | plainify -}}
+			{{- $contentWithAlt := .Content | replaceRE "(?is)<script[^>]*?>.*?</script>" "" | replaceRE "(?is)<style[^>]*?>.*?</style>" "" | replaceRE "(?is)<noscript[^>]*?>.*?</noscript>" "" -}}
+			{{- $contentWithAlt = $contentWithAlt | replaceRE "(?i)<img[^>]*?alt=\"([^\"]*)\"[^>]*?>" " $1 " -}}
+			{{- $cleanContent := $contentWithAlt | plainify -}}
 			{
 				"id": "{{ .Permalink }}",
 				"title": {{ .Title | jsonify }},
