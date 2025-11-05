@@ -7,7 +7,7 @@
   {{- $sorted := sort $posts "Date" "asc" -}}
   {{- $first := index $sorted 0 -}}
   {{- $startYear := $first.Date.Year -}}
-  {{- $years = sub (now).Year $startYear -}}
+  {{- $years = sub (now.Year) $startYear -}}
 {{- end -}}
 {{- $context := dict "text" $params "years" $years "count" $count -}}
 <p id="searchIntroText">{{ partial "search_intro_content.html" $context }}</p>
