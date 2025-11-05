@@ -23,6 +23,7 @@ menu:
         placeholder="Suchbegriff eingeben…"
         autocomplete="off"
         aria-label="Blog durchsuchen"
+        autofocus
         required>
       <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">
         <svg viewBox="0 0 24 24" aria-hidden="true">
