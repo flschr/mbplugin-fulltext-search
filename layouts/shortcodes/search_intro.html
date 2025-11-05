@@ -10,4 +10,4 @@
   {{- $years = sub (now.Year) $startYear -}}
 {{- end -}}
 {{- $context := dict "text" $params "years" $years "count" $count -}}
-<p>{{ partial "search_intro_content.html" $context }}</p>
+<p id="searchIntroText">{{ partial "search_intro_content.html" $context }}</p>

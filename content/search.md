@@ -291,6 +291,32 @@ menu:
 		searchInput.focus();
 	});
 
+	function updateSearchIntro(items) {
+		var introText = document.getElementById('searchIntroText');
+		if (!introText) {
+			return;
+		}
+
+		var posts = items.filter(function(item) {
+			return item.type === 'post';
+		});
+
+		var count = posts.length;
+		var years = 0;
+
+		if (count > 0) {
+			var oldest = posts.reduce(function(oldest, current) {
+				return new Date(current.date_published) < new Date(oldest.date_published) ? current : oldest;
+			});
+
+			var startYear = new Date(oldest.date_published).getFullYear();
+			var currentYear = new Date().getFullYear();
+			years = currentYear - startYear;
+		}
+
+		introText.textContent = years + ' Jahre, ' + count + ' Artikel – finde deinen Favoriten.';
+	}
+
 	loadingTimer = window.setTimeout(function() {
 		searchLoading.classList.remove('is-hidden');
 	}, 1500);
@@ -339,6 +365,7 @@ menu:
 					searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
 				};
 			});
+			updateSearchIntro(items);
 			finishLoading();
 			restoreInitialSearch();
 		})
