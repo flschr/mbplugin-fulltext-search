@@ -43,6 +43,25 @@ menu:
     </div>
     <ul id="resultsList" class="results-list"></ul>
   </div>
+
+  <noscript>
+    <div class="noscript-search">
+      <p class="noscript-message">Die clientseitige Suche benötigt JavaScript. Nutze stattdessen die Google-Suche:</p>
+      <form action="https://www.google.com/search" method="get" class="noscript-form">
+        <input type="hidden" name="q" value="site:fischr.org" />
+        <div class="search-box">
+          <input
+            type="text"
+            name="q"
+            class="search-input"
+            placeholder="Suchbegriff eingeben…"
+            aria-label="Blog mit Google durchsuchen"
+            required />
+          <button type="submit" class="search-button">Suchen</button>
+        </div>
+      </form>
+    </div>
+  </noscript>
 </div>
 
 <script>
@@ -60,6 +79,9 @@ menu:
 
 	var archiveItems = [];
 	var loadingTimer = null;
+
+	// Show JS-based search since JavaScript is available
+	searchForm.style.display = 'block';
 
 	function normalizeText(value) {
 		return (value || '').replace(/\s+/g, ' ').trim();
@@ -542,5 +564,56 @@ menu:
 	.result-card {
 		padding: 0;
 	}
+}
+
+/* Hide JS-based search elements when JS is disabled */
+.search-form,
+.search-loading,
+.search-error,
+.results-container {
+	display: none;
+}
+
+/* NoScript fallback styles */
+.noscript-search {
+	margin-top: 2rem;
+	padding: 1.5rem;
+	background: #f8f9fa;
+	border: 1px solid #dee2e6;
+	border-radius: 0.5rem;
+}
+
+.noscript-message {
+	margin: 0 0 1rem 0;
+	color: #495057;
+	font-size: 0.95rem;
+}
+
+.noscript-form .search-box {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.noscript-form .search-input {
+	flex: 1;
+}
+
+.noscript-form .search-button {
+	padding: 0.75rem 1.5rem;
+	background: #007bff;
+	color: white;
+	border: none;
+	border-radius: 0.375rem;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.noscript-form .search-button:hover {
+	background: #0056b3;
+}
+
+.noscript-form .search-button:active {
+	background: #004085;
 }
 </style>
