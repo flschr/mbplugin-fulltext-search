@@ -6,8 +6,8 @@
 	"feed_url": "{{ .Site.BaseURL }}photos/index.json",
 	"items": [
 		{{- $posts := (where .Site.RegularPages "Type" "post") -}}
-		{{- $aboutPage := where .Site.RegularPages "File.BaseNameNoExt" "eq" "about" -}}
-		{{- $datenschutzPage := where .Site.RegularPages "File.BaseNameNoExt" "eq" "datenschutz" -}}
+		{{- $aboutPage := where .Site.RegularPages ".File.BaseNameNoExt" "eq" "about" -}}
+		{{- $datenschutzPage := where .Site.RegularPages ".File.BaseNameNoExt" "eq" "datenschutz" -}}
 		{{- $list := union $posts (union $aboutPage $datenschutzPage) -}}
 		{{- $len := (len $list) -}}
 		{{ range $index, $value := $list }}
