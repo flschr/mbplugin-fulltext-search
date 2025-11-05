@@ -12,8 +12,7 @@ menu:
   {{< search_intro >}}
   </div>
 
-  <form id="searchForm" class="search-form" role="search" action="https://www.google.com/search" method="get">
-    <input type="hidden" name="q" value="site:fischr.org " id="siteParam" />
+  <form id="searchForm" class="search-form" role="search">
     <div class="search-box">
       <input
         type="search"
@@ -22,18 +21,14 @@ menu:
         class="search-input"
         placeholder="Suchbegriff eingeben…"
         autocomplete="off"
-        aria-label="Blog durchsuchen"
-        autofocus
-        required>
+        disabled
+        aria-label="Blog durchsuchen">
       <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/>
         </svg>
       </button>
     </div>
-    <noscript>
-      <button type="submit" class="search-button">Suchen mit Google</button>
-    </noscript>
   </form>
 
   <div id="searchLoading" class="search-loading is-hidden">
@@ -48,10 +43,6 @@ menu:
     </div>
     <ul id="resultsList" class="results-list"></ul>
   </div>
-
-  <noscript>
-    <p class="noscript-message">Die clientseitige Suche benötigt JavaScript. Das Formular nutzt die Google-Suche als Fallback.</p>
-  </noscript>
 </div>
 
 <script>
@@ -68,65 +59,10 @@ menu:
 	var searchError = document.getElementById('searchError');
 
 	var archiveItems = [];
-	var hasFullContent = false;
-	var CACHE_PREFIX = 'archive_cache_';
-	var CACHE_VERSION_KEY = 'archive_version';
-
-	// Remove site parameter and prevent form submission for JS-based search
-	var siteParam = document.getElementById('siteParam');
-	if (siteParam) {
-		siteParam.remove();
-	}
-
-	// Search input is immediately available
-	searchInput.disabled = false;
-
-	searchForm.addEventListener('submit', function(event) {
-		event.preventDefault();
-		submitSearch(searchInput.value);
-	});
+	var loadingTimer = null;
 
 	function normalizeText(value) {
 		return (value || '').replace(/\s+/g, ' ').trim();
-	}
-
-	// localStorage cache management
-	function cleanOldCaches(currentVersion) {
-		try {
-			var keys = Object.keys(localStorage);
-			keys.forEach(function(key) {
-				if (key.startsWith(CACHE_PREFIX) && key !== CACHE_PREFIX + currentVersion + '_titles' && key !== CACHE_PREFIX + currentVersion + '_full') {
-					localStorage.removeItem(key);
-				}
-			});
-			// Remove old version key if different
-			var storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
-			if (storedVersion && storedVersion !== currentVersion) {
-				localStorage.removeItem(CACHE_VERSION_KEY);
-			}
-		} catch (e) {
-			// Ignore localStorage errors
-		}
-	}
-
-	function getCachedData(version, type) {
-		try {
-			var key = CACHE_PREFIX + version + '_' + type;
-			var cached = localStorage.getItem(key);
-			return cached ? JSON.parse(cached) : null;
-		} catch (e) {
-			return null;
-		}
-	}
-
-	function setCachedData(version, type, data) {
-		try {
-			var key = CACHE_PREFIX + version + '_' + type;
-			localStorage.setItem(key, JSON.stringify(data));
-			localStorage.setItem(CACHE_VERSION_KEY, version);
-		} catch (e) {
-			// Ignore localStorage errors (quota exceeded, etc.)
-		}
 	}
 
 	function escapeRegExp(value) {
@@ -323,6 +259,21 @@ menu:
 		}
 	}
 
+	function finishLoading() {
+		if (loadingTimer) {
+			window.clearTimeout(loadingTimer);
+			loadingTimer = null;
+		}
+		searchLoading.classList.add('is-hidden');
+		searchInput.disabled = false;
+		searchInput.focus();
+	}
+
+	searchForm.addEventListener('submit', function(event) {
+		event.preventDefault();
+		submitSearch(searchInput.value);
+	});
+
 	searchInput.addEventListener('input', function(event) {
 		submitSearch(event.target.value);
 	});
@@ -366,170 +317,65 @@ menu:
 		introText.textContent = years + ' Jahre, ' + count + ' Artikel – finde deinen Favoriten.';
 	}
 
-	function processArchiveItems(items, includeContent) {
-		return items.map(function(item) {
-			var title = normalizeText(item.title || '');
-			var content = includeContent ? normalizeText(item.content_text || '') : '';
-			var tagsRaw = Array.isArray(item.tags) ? item.tags : [];
-			var categoriesRaw = Array.isArray(item.categories) ? item.categories : [];
-			var metaSet = Object.create(null);
-			var metaValues = [];
+	loadingTimer = window.setTimeout(function() {
+		searchLoading.classList.remove('is-hidden');
+	}, 1500);
 
-			function appendMeta(values) {
-				values.forEach(function(value) {
-					var clean = normalizeText(value);
-					if (!clean || metaSet[clean]) {
-						return;
-					}
-					metaSet[clean] = true;
-					metaValues.push(clean);
-				});
+	fetch('/archive/index.json')
+		.then(function(response) {
+			if (!response.ok) {
+				throw new Error('Archiv konnte nicht geladen werden (Status ' + response.status + ').');
 			}
+			return response.json();
+		})
+		.then(function(data) {
+			var items = Array.isArray(data.items) ? data.items : [];
+			archiveItems = items.map(function(item) {
+				var title = normalizeText(item.title || '');
+				var content = normalizeText(item.content_text || '');
+				var tagsRaw = Array.isArray(item.tags) ? item.tags : [];
+				var categoriesRaw = Array.isArray(item.categories) ? item.categories : [];
+				var metaSet = Object.create(null);
+				var metaValues = [];
 
-			appendMeta(tagsRaw);
-			appendMeta(categoriesRaw);
-
-			var metaString = metaValues.join(', ');
-
-			return {
-				id: item.id || item.url,
-				url: item.url,
-				date_published: item.date_published,
-				type: item.type,
-				displayTitle: title || 'Beitrag ohne Titel',
-				content: content,
-				metaValues: metaValues,
-				metaString: metaString,
-				searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
-			};
-		});
-	}
-
-	function loadArchiveTitles(version) {
-		// Try cache first
-		var cached = getCachedData(version, 'titles');
-		if (cached) {
-			return Promise.resolve(cached);
-		}
-
-		// Try to load titles-only file (faster)
-		return fetch('/archive/index-titles.json')
-			.then(function(response) {
-				if (!response.ok) {
-					throw new Error('Titles not available');
+				function appendMeta(values) {
+					values.forEach(function(value) {
+						var clean = normalizeText(value);
+						if (!clean || metaSet[clean]) {
+							return;
+						}
+						metaSet[clean] = true;
+						metaValues.push(clean);
+					});
 				}
-				return response.json();
-			})
-			.then(function(data) {
-				setCachedData(version, 'titles', data);
-				return data;
-			})
-			.catch(function() {
-				// If titles file doesn't exist, return null to fall back to full archive
-				return null;
+
+				appendMeta(tagsRaw);
+				appendMeta(categoriesRaw);
+
+				var metaString = metaValues.join(', ');
+
+				return {
+					id: item.id || item.url,
+					url: item.url,
+					date_published: item.date_published,
+					displayTitle: title || 'Beitrag ohne Titel',
+					content: content,
+					metaValues: metaValues,
+					metaString: metaString,
+					searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
+				};
 			});
-	}
-
-	function loadArchiveFull(version) {
-		// Try cache first
-		var cached = getCachedData(version, 'full');
-		if (cached) {
-			return Promise.resolve(cached);
-		}
-
-		// Load full archive
-		return fetch('/archive/index.json')
-			.then(function(response) {
-				if (!response.ok) {
-					throw new Error('Archiv konnte nicht geladen werden (Status ' + response.status + ').');
-				}
-				return response.json();
-			})
-			.then(function(data) {
-				setCachedData(version, 'full', data);
-				return data;
-			});
-	}
-
-	function mergeFullContent(fullData) {
-		if (!fullData || !Array.isArray(fullData.items)) {
-			return;
-		}
-
-		var fullItems = processArchiveItems(fullData.items, true);
-
-		// Create a map for quick lookup
-		var fullMap = {};
-		fullItems.forEach(function(item) {
-			fullMap[item.id] = item;
+			updateSearchIntro(items);
+			finishLoading();
+			restoreInitialSearch();
+		})
+		.catch(function(error) {
+			finishLoading();
+			searchError.textContent = 'Fehler beim Laden des Archivs: ' + error.message;
+			searchError.classList.remove('is-hidden');
+			searchInput.disabled = true;
+			clearButton.disabled = true;
 		});
-
-		// Merge content into existing items
-		archiveItems = archiveItems.map(function(item) {
-			var fullItem = fullMap[item.id];
-			if (fullItem) {
-				item.content = fullItem.content;
-				item.searchText = (item.displayTitle + ' ' + item.content + ' ' + item.metaString).toLowerCase();
-			}
-			return item;
-		});
-
-		hasFullContent = true;
-
-		// Re-run search if there's an active query
-		var currentQuery = searchInput.value.trim();
-		if (currentQuery) {
-			runSearch(currentQuery);
-		}
-	}
-
-	// Initialize archive loading
-	(function initializeArchive() {
-		// Stage 1: Load titles first (or full if titles don't exist)
-		loadArchiveTitles('v1')
-			.then(function(titlesData) {
-				if (titlesData && titlesData.items) {
-					// Got titles, use cache version from response
-					var version = titlesData.cache_version || 'v1';
-					cleanOldCaches(version);
-
-					archiveItems = processArchiveItems(titlesData.items, false);
-					updateSearchIntro(titlesData.items);
-					restoreInitialSearch();
-
-					// Stage 2: Load full content in background
-					loadArchiveFull(version)
-						.then(function(fullData) {
-							mergeFullContent(fullData);
-						})
-						.catch(function(error) {
-							// Silently fail - titles are still searchable
-							console.warn('Volltext-Archiv konnte nicht geladen werden:', error);
-						});
-				} else {
-					// No titles file, load full archive directly
-					return loadArchiveFull('v1');
-				}
-			})
-			.then(function(fullData) {
-				// This runs only if we skipped titles and loaded full directly
-				if (fullData && fullData.items) {
-					var version = fullData.cache_version || 'v1';
-					cleanOldCaches(version);
-
-					archiveItems = processArchiveItems(fullData.items, true);
-					hasFullContent = true;
-					updateSearchIntro(fullData.items);
-					restoreInitialSearch();
-				}
-			})
-			.catch(function(error) {
-				searchError.textContent = 'Fehler beim Laden des Archivs: ' + error.message;
-				searchError.classList.remove('is-hidden');
-				searchInput.disabled = true;
-				clearButton.disabled = true;
-			});
-	})();
 })();
 </script>
 
@@ -696,39 +542,5 @@ menu:
 	.result-card {
 		padding: 0;
 	}
-}
-
-/* NoScript fallback styles */
-.noscript-message {
-	margin: 1rem 0;
-	padding: 1rem;
-	background: #f8f9fa;
-	border: 1px solid #dee2e6;
-	border-radius: 0.375rem;
-	color: #495057;
-	font-size: 0.9rem;
-	text-align: center;
-}
-
-.search-button {
-	margin-top: 1rem;
-	padding: 0.75rem 1.5rem;
-	background: #007bff;
-	color: white;
-	border: none;
-	border-radius: 0.375rem;
-	font-size: 1rem;
-	cursor: pointer;
-	transition: background 0.2s;
-	display: block;
-	width: 100%;
-}
-
-.search-button:hover {
-	background: #0056b3;
-}
-
-.search-button:active {
-	background: #004085;
 }
 </style>

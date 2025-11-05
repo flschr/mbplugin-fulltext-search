@@ -4,7 +4,6 @@
 	"icon": "{{ .Site.Author.avatar }}",
 	"home_page_url": "{{ .Site.BaseURL }}",
 	"feed_url": "{{ .Site.BaseURL }}photos/index.json",
-	"cache_version": "{{ .Site.LastChange.Unix }}",
 	"items": [
 		{{- $list := .Site.RegularPages -}}
 		{{- $len := (len $list) -}}
