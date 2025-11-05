@@ -12,7 +12,8 @@ menu:
   {{< search_intro >}}
   </div>
 
-  <form id="searchForm" class="search-form" role="search">
+  <form id="searchForm" class="search-form" role="search" action="https://www.google.com/search" method="get">
+    <input type="hidden" name="q" value="site:fischr.org " id="siteParam" />
     <div class="search-box">
       <input
         type="search"
@@ -21,14 +22,17 @@ menu:
         class="search-input"
         placeholder="Suchbegriff eingeben…"
         autocomplete="off"
-        disabled
-        aria-label="Blog durchsuchen">
+        aria-label="Blog durchsuchen"
+        required>
       <button type="button" id="clearSearch" class="clear-search is-hidden" aria-label="Eingabe löschen">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/>
         </svg>
       </button>
     </div>
+    <noscript>
+      <button type="submit" class="search-button">Suchen mit Google</button>
+    </noscript>
   </form>
 
   <div id="searchLoading" class="search-loading is-hidden">
@@ -45,22 +49,7 @@ menu:
   </div>
 
   <noscript>
-    <div class="noscript-search">
-      <p class="noscript-message">Die clientseitige Suche benötigt JavaScript. Nutze stattdessen die Google-Suche:</p>
-      <form action="https://www.google.com/search" method="get" class="noscript-form">
-        <input type="hidden" name="q" value="site:fischr.org" />
-        <div class="search-box">
-          <input
-            type="text"
-            name="q"
-            class="search-input"
-            placeholder="Suchbegriff eingeben…"
-            aria-label="Blog mit Google durchsuchen"
-            required />
-          <button type="submit" class="search-button">Suchen</button>
-        </div>
-      </form>
-    </div>
+    <p class="noscript-message">Die clientseitige Suche benötigt JavaScript. Das Formular nutzt die Google-Suche als Fallback.</p>
   </noscript>
 </div>
 
@@ -80,8 +69,19 @@ menu:
 	var archiveItems = [];
 	var loadingTimer = null;
 
-	// Show JS-based search since JavaScript is available
-	searchForm.style.display = 'block';
+	// Remove site parameter and prevent form submission for JS-based search
+	var siteParam = document.getElementById('siteParam');
+	if (siteParam) {
+		siteParam.remove();
+	}
+
+	// Disable input until archive is loaded
+	searchInput.disabled = true;
+
+	searchForm.addEventListener('submit', function(event) {
+		event.preventDefault();
+		submitSearch(searchInput.value);
+	});
 
 	function normalizeText(value) {
 		return (value || '').replace(/\s+/g, ' ').trim();
@@ -566,39 +566,20 @@ menu:
 	}
 }
 
-/* Hide JS-based search elements when JS is disabled */
-.search-form,
-.search-loading,
-.search-error,
-.results-container {
-	display: none;
-}
-
 /* NoScript fallback styles */
-.noscript-search {
-	margin-top: 2rem;
-	padding: 1.5rem;
+.noscript-message {
+	margin: 1rem 0;
+	padding: 1rem;
 	background: #f8f9fa;
 	border: 1px solid #dee2e6;
-	border-radius: 0.5rem;
-}
-
-.noscript-message {
-	margin: 0 0 1rem 0;
+	border-radius: 0.375rem;
 	color: #495057;
-	font-size: 0.95rem;
+	font-size: 0.9rem;
+	text-align: center;
 }
 
-.noscript-form .search-box {
-	display: flex;
-	gap: 0.5rem;
-}
-
-.noscript-form .search-input {
-	flex: 1;
-}
-
-.noscript-form .search-button {
+.search-button {
+	margin-top: 1rem;
 	padding: 0.75rem 1.5rem;
 	background: #007bff;
 	color: white;
@@ -607,13 +588,15 @@ menu:
 	font-size: 1rem;
 	cursor: pointer;
 	transition: background 0.2s;
+	display: block;
+	width: 100%;
 }
 
-.noscript-form .search-button:hover {
+.search-button:hover {
 	background: #0056b3;
 }
 
-.noscript-form .search-button:active {
+.search-button:active {
 	background: #004085;
 }
 </style>
