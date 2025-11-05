@@ -1,23 +1,19 @@
+{{- $list := .Site.RegularPages -}}
 {
 	"version": "https://jsonfeed.org/version/1",
 	"title": {{ .Site.Title | jsonify }},
 	"icon": "{{ .Site.Author.avatar }}",
 	"home_page_url": "{{ .Site.BaseURL }}",
-	"feed_url": "{{ .Site.BaseURL }}photos/index.json",
+	"feed_url": "{{ .Site.BaseURL }}archive/index-titles.json",
 	"cache_version": "{{ .Site.LastChange.Unix }}",
 	"items": [
-		{{- $list := .Site.RegularPages -}}
 		{{- $len := (len $list) -}}
 		{{ range $index, $value := $list }}
 			{{- $tags := default (slice) .Params.tags -}}
 			{{- $categories := default (slice) .Params.categories -}}
-			{{- $contentWithAlt := .Content | replaceRE "(?is)<script[^>]*?>.*?</script>" "" | replaceRE "(?is)<style[^>]*?>.*?</style>" "" | replaceRE "(?is)<noscript[^>]*?>.*?</noscript>" "" -}}
-			{{- $contentWithAlt = $contentWithAlt | replaceRE "(?i)<img[^>]*?alt=\"([^\"]*)\"[^>]*?>" " $1 " -}}
-			{{- $cleanContent := $contentWithAlt | plainify -}}
 			{
 				"id": "{{ .Permalink }}",
 				"title": {{ .Title | jsonify }},
-				"content_text": {{ $cleanContent | jsonify }},
 				"date_published": "{{ .Date.Format "2006-01-02T15:04:05-07:00" }}",
 				"url": "{{ .Permalink }}",
 				"type": "{{ .Type }}",

@@ -67,7 +67,9 @@ menu:
 	var searchError = document.getElementById('searchError');
 
 	var archiveItems = [];
-	var loadingTimer = null;
+	var hasFullContent = false;
+	var CACHE_PREFIX = 'archive_cache_';
+	var CACHE_VERSION_KEY = 'archive_version';
 
 	// Remove site parameter and prevent form submission for JS-based search
 	var siteParam = document.getElementById('siteParam');
@@ -75,8 +77,8 @@ menu:
 		siteParam.remove();
 	}
 
-	// Disable input until archive is loaded
-	searchInput.disabled = true;
+	// Search input is immediately available
+	searchInput.disabled = false;
 
 	searchForm.addEventListener('submit', function(event) {
 		event.preventDefault();
@@ -85,6 +87,45 @@ menu:
 
 	function normalizeText(value) {
 		return (value || '').replace(/\s+/g, ' ').trim();
+	}
+
+	// localStorage cache management
+	function cleanOldCaches(currentVersion) {
+		try {
+			var keys = Object.keys(localStorage);
+			keys.forEach(function(key) {
+				if (key.startsWith(CACHE_PREFIX) && key !== CACHE_PREFIX + currentVersion + '_titles' && key !== CACHE_PREFIX + currentVersion + '_full') {
+					localStorage.removeItem(key);
+				}
+			});
+			// Remove old version key if different
+			var storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
+			if (storedVersion && storedVersion !== currentVersion) {
+				localStorage.removeItem(CACHE_VERSION_KEY);
+			}
+		} catch (e) {
+			// Ignore localStorage errors
+		}
+	}
+
+	function getCachedData(version, type) {
+		try {
+			var key = CACHE_PREFIX + version + '_' + type;
+			var cached = localStorage.getItem(key);
+			return cached ? JSON.parse(cached) : null;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function setCachedData(version, type, data) {
+		try {
+			var key = CACHE_PREFIX + version + '_' + type;
+			localStorage.setItem(key, JSON.stringify(data));
+			localStorage.setItem(CACHE_VERSION_KEY, version);
+		} catch (e) {
+			// Ignore localStorage errors (quota exceeded, etc.)
+		}
 	}
 
 	function escapeRegExp(value) {
@@ -281,21 +322,6 @@ menu:
 		}
 	}
 
-	function finishLoading() {
-		if (loadingTimer) {
-			window.clearTimeout(loadingTimer);
-			loadingTimer = null;
-		}
-		searchLoading.classList.add('is-hidden');
-		searchInput.disabled = false;
-		searchInput.focus();
-	}
-
-	searchForm.addEventListener('submit', function(event) {
-		event.preventDefault();
-		submitSearch(searchInput.value);
-	});
-
 	searchInput.addEventListener('input', function(event) {
 		submitSearch(event.target.value);
 	});
@@ -339,65 +365,170 @@ menu:
 		introText.textContent = years + ' Jahre, ' + count + ' Artikel – finde deinen Favoriten.';
 	}
 
-	loadingTimer = window.setTimeout(function() {
-		searchLoading.classList.remove('is-hidden');
-	}, 1500);
+	function processArchiveItems(items, includeContent) {
+		return items.map(function(item) {
+			var title = normalizeText(item.title || '');
+			var content = includeContent ? normalizeText(item.content_text || '') : '';
+			var tagsRaw = Array.isArray(item.tags) ? item.tags : [];
+			var categoriesRaw = Array.isArray(item.categories) ? item.categories : [];
+			var metaSet = Object.create(null);
+			var metaValues = [];
 
-	fetch('/archive/index.json')
-		.then(function(response) {
-			if (!response.ok) {
-				throw new Error('Archiv konnte nicht geladen werden (Status ' + response.status + ').');
+			function appendMeta(values) {
+				values.forEach(function(value) {
+					var clean = normalizeText(value);
+					if (!clean || metaSet[clean]) {
+						return;
+					}
+					metaSet[clean] = true;
+					metaValues.push(clean);
+				});
 			}
-			return response.json();
-		})
-		.then(function(data) {
-			var items = Array.isArray(data.items) ? data.items : [];
-			archiveItems = items.map(function(item) {
-				var title = normalizeText(item.title || '');
-				var content = normalizeText(item.content_text || '');
-				var tagsRaw = Array.isArray(item.tags) ? item.tags : [];
-				var categoriesRaw = Array.isArray(item.categories) ? item.categories : [];
-				var metaSet = Object.create(null);
-				var metaValues = [];
 
-				function appendMeta(values) {
-					values.forEach(function(value) {
-						var clean = normalizeText(value);
-						if (!clean || metaSet[clean]) {
-							return;
-						}
-						metaSet[clean] = true;
-						metaValues.push(clean);
-					});
-				}
+			appendMeta(tagsRaw);
+			appendMeta(categoriesRaw);
 
-				appendMeta(tagsRaw);
-				appendMeta(categoriesRaw);
+			var metaString = metaValues.join(', ');
 
-				var metaString = metaValues.join(', ');
-
-				return {
-					id: item.id || item.url,
-					url: item.url,
-					date_published: item.date_published,
-					displayTitle: title || 'Beitrag ohne Titel',
-					content: content,
-					metaValues: metaValues,
-					metaString: metaString,
-					searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
-				};
-			});
-			updateSearchIntro(items);
-			finishLoading();
-			restoreInitialSearch();
-		})
-		.catch(function(error) {
-			finishLoading();
-			searchError.textContent = 'Fehler beim Laden des Archivs: ' + error.message;
-			searchError.classList.remove('is-hidden');
-			searchInput.disabled = true;
-			clearButton.disabled = true;
+			return {
+				id: item.id || item.url,
+				url: item.url,
+				date_published: item.date_published,
+				type: item.type,
+				displayTitle: title || 'Beitrag ohne Titel',
+				content: content,
+				metaValues: metaValues,
+				metaString: metaString,
+				searchText: (title + ' ' + content + ' ' + metaString).toLowerCase()
+			};
 		});
+	}
+
+	function loadArchiveTitles(version) {
+		// Try cache first
+		var cached = getCachedData(version, 'titles');
+		if (cached) {
+			return Promise.resolve(cached);
+		}
+
+		// Try to load titles-only file (faster)
+		return fetch('/archive/index-titles.json')
+			.then(function(response) {
+				if (!response.ok) {
+					throw new Error('Titles not available');
+				}
+				return response.json();
+			})
+			.then(function(data) {
+				setCachedData(version, 'titles', data);
+				return data;
+			})
+			.catch(function() {
+				// If titles file doesn't exist, return null to fall back to full archive
+				return null;
+			});
+	}
+
+	function loadArchiveFull(version) {
+		// Try cache first
+		var cached = getCachedData(version, 'full');
+		if (cached) {
+			return Promise.resolve(cached);
+		}
+
+		// Load full archive
+		return fetch('/archive/index.json')
+			.then(function(response) {
+				if (!response.ok) {
+					throw new Error('Archiv konnte nicht geladen werden (Status ' + response.status + ').');
+				}
+				return response.json();
+			})
+			.then(function(data) {
+				setCachedData(version, 'full', data);
+				return data;
+			});
+	}
+
+	function mergeFullContent(fullData) {
+		if (!fullData || !Array.isArray(fullData.items)) {
+			return;
+		}
+
+		var fullItems = processArchiveItems(fullData.items, true);
+
+		// Create a map for quick lookup
+		var fullMap = {};
+		fullItems.forEach(function(item) {
+			fullMap[item.id] = item;
+		});
+
+		// Merge content into existing items
+		archiveItems = archiveItems.map(function(item) {
+			var fullItem = fullMap[item.id];
+			if (fullItem) {
+				item.content = fullItem.content;
+				item.searchText = (item.displayTitle + ' ' + item.content + ' ' + item.metaString).toLowerCase();
+			}
+			return item;
+		});
+
+		hasFullContent = true;
+
+		// Re-run search if there's an active query
+		var currentQuery = searchInput.value.trim();
+		if (currentQuery) {
+			runSearch(currentQuery);
+		}
+	}
+
+	// Initialize archive loading
+	(function initializeArchive() {
+		// Stage 1: Load titles first (or full if titles don't exist)
+		loadArchiveTitles('v1')
+			.then(function(titlesData) {
+				if (titlesData && titlesData.items) {
+					// Got titles, use cache version from response
+					var version = titlesData.cache_version || 'v1';
+					cleanOldCaches(version);
+
+					archiveItems = processArchiveItems(titlesData.items, false);
+					updateSearchIntro(titlesData.items);
+					restoreInitialSearch();
+
+					// Stage 2: Load full content in background
+					loadArchiveFull(version)
+						.then(function(fullData) {
+							mergeFullContent(fullData);
+						})
+						.catch(function(error) {
+							// Silently fail - titles are still searchable
+							console.warn('Volltext-Archiv konnte nicht geladen werden:', error);
+						});
+				} else {
+					// No titles file, load full archive directly
+					return loadArchiveFull('v1');
+				}
+			})
+			.then(function(fullData) {
+				// This runs only if we skipped titles and loaded full directly
+				if (fullData && fullData.items) {
+					var version = fullData.cache_version || 'v1';
+					cleanOldCaches(version);
+
+					archiveItems = processArchiveItems(fullData.items, true);
+					hasFullContent = true;
+					updateSearchIntro(fullData.items);
+					restoreInitialSearch();
+				}
+			})
+			.catch(function(error) {
+				searchError.textContent = 'Fehler beim Laden des Archivs: ' + error.message;
+				searchError.classList.remove('is-hidden');
+				searchInput.disabled = true;
+				clearButton.disabled = true;
+			});
+	})();
 })();
 </script>
 
