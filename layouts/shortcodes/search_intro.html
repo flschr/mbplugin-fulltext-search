@@ -1,7 +1,7 @@
 {{- $params := .Get "text" -}}
 {{- $years := 0 -}}
 {{- $count := 0 -}}
-{{- $posts := where .Site.RegularPages "Type" "post" -}}
+{{- $posts := .Site.RegularPages -}}
 {{- $count = len $posts -}}
 {{- if gt $count 0 -}}
   {{- $sorted := sort $posts "Date" "asc" -}}
